@@ -21,6 +21,7 @@ class User extends Authenticatable
         'name',
         'email',
         'password',
+        'role',
     ];
 
     /**
@@ -32,6 +33,11 @@ class User extends Authenticatable
         'password',
         'remember_token',
     ];
+
+    public function distributions()
+    {
+        return $this->hasMany(Distribution::class, 'barista_id');
+    }
 
     /**
      * Get the attributes that should be cast.
