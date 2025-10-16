@@ -1,30 +1,39 @@
 @extends('layouts.app')
 
 @section('content')
-    <h2>Distributions</h2>
-    <a href="{{ route('distributions.create') }}">Add New Distribution</a>
+    <div class="d-flex justify-content-between align-items-center mb-3">
+        <h3 class="fw-semibold text-secondary">Daftar Distribusi Produk</h3>
+        <a href="{{ route('distributions.create') }}" class="btn btn-primary">+ Tambah Distribusi</a>
+    </div>
 
-    <table id="dt-distributions" class="display" style="width:100%">
-        <thead>
+
+    <table id="dt-distributions" class="table table-bordered table-striped align-middle">
+        <thead class="table-light">
             <tr>
-                <th>Tanggal Distribusi</th>
+                <th>Tanggal</th>
                 <th>Barista</th>
                 <th>Total Qty</th>
                 <th>Estimasi Penjualan</th>
-                <th>Notes</th>
+                <th>Catatan</th>
                 <th>Aksi</th>
             </tr>
         </thead>
     </table>
 
-
-    <div id="detail-modal"
-        style="display:none;padding:20px;background:#fff;border:1px solid #ddd;position:fixed;left:20%;top:20%;width:60%;z-index:9999;">
-        <button id="close-detail">Close</button>
-        <div id="detail-body"></div>
+    <!-- Modal Detail -->
+    <div class="modal fade" id="detailModal" tabindex="-1" aria-labelledby="detailModalLabel" aria-hidden="true">
+        <div class="modal-dialog modal-lg modal-dialog-centered">
+            <div class="modal-content">
+                <div class="modal-header bg-primary text-white">
+                    <h5 class="modal-title" id="detailModalLabel">Detail Distribusi</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <div id="modal-body-content" class="p-2 text-secondary"></div>
+                </div>
+            </div>
+        </div>
     </div>
-
-
 @endsection
 
 
@@ -43,26 +52,39 @@
                     { data: 'barista' },
                     { data: 'total_qty' },
                     { data: 'estimated_result' },
-                    { data: 'notes' },
                     {
-                        data: 'id', render: function (d, t, r) {
-                            return '<a href="/distributions/' + d + '">Detail</a> | <a href="/distributions/' + d + '" class="del" data-id="' + d + '">Hapus</a>';
+                        data: 'notes', render: function (d) {
+                            if (!d || d.trim() === '') {
+                                return '<span class="text-muted">N/A</span>';
+                            }
+                            return d;
+                        }
+                    },
+                    {
+                        data: 'id', render: function (d) {
+                            return `<div class='btn-group'>
+                              <button class='btn btn-sm btn-outline-primary show-detail' data-id='${d}'>Detail</button>
+                              <button class='btn btn-sm btn-outline-danger del' data-id='${d}'>Hapus</button>
+                              </div>`;
                         }
                     }
                 ]
             });
 
-
-            $(document).on('click', '.del', function (e) {
-                e.preventDefault();
-                if (!confirm('Hapus distribusi ini?')) return;
+            // Load detail into modal
+            $(document).on('click', '.show-detail', function () {
                 var id = $(this).data('id');
-                $.ajax({ url: '/distributions/' + id, method: 'DELETE', data: {
-                    _token: $('meta[name="csrf-token"]').attr('content'),
-                }, success: function () { table.ajax.reload(); } });
+                $('#modal-body-content').html('<p class="text-center text-muted">Memuat detail...</p>');
+                $('#detailModal').modal('show');
+                $.get('/distributions/' + id, function (res) {
+                    $('#modal-body-content').html(res);
+                });
+            });
+
+            $(document).on('click', '.del', function () {
+                if (!confirm('Yakin ingin menghapus distribusi ini?')) return;
+                $.ajax({ url: '/distributions/' + $(this).data('id'), method: 'DELETE', data: { _token: '{{ csrf_token() }}' }, success: function () { table.ajax.reload(); } });
             });
         });
-
-        console.log($('meta[name="csrf-token"]').attr('content'))
     </script>
 @endpush

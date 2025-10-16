@@ -61,6 +61,10 @@ class DistributionProductController extends Controller
     {
         $d = DistributionDetail::findOrFail($id);
         if ($d->distribution_id) {
+            return response()->json(['error' => 'Cannot delete saved detail'], 422);
         }
+
+        $d->delete();
+        return response()->json(['ok' => true]);
     }
 }
